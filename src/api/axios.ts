@@ -7,9 +7,12 @@ const api = axios.create({
 });
 
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('accessToken');
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
+  const authStorage = localStorage.getItem('auth-storage');
+  if (authStorage) {
+    const { state } = JSON.parse(authStorage);
+    if (state.user?.accessToken) {
+      config.headers.Authorization = `Bearer ${state.user.accessToken}`;
+    }
   }
   return config;
 });
@@ -18,8 +21,14 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      localStorage.removeItem('accessToken');
-      window.location.href = '/login';
+      // 보호된 경로에 대해서만 로그인 페이지로 리다이렉트
+      const protectedPaths = ['/profile', '/admin', '/boards/create'];
+      const currentPath = window.location.pathname;
+      
+      if (protectedPaths.some(path => currentPath.startsWith(path))) {
+        localStorage.removeItem('auth-storage');
+        window.location.href = '/login';
+      }
     }
     const message = error.response?.data?.message || '오류가 발생했습니다.';
     toast.error(message);

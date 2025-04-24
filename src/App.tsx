@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { ThemeProvider } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 import { ToastContainer } from 'react-toastify';
@@ -12,12 +12,15 @@ import { LoginPage } from './pages/LoginPage';
 import { SignupPage } from './pages/SignupPage';
 import { ProfilePage } from './pages/ProfilePage';
 import { AdminPage } from './pages/AdminPage';
+import BoardListPage from './pages/BoardListPage';
+import BoardCreatePage from './pages/BoardCreatePage';
+import BoardDetailPage from './pages/BoardDetailPage';
 
 function App() {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <BrowserRouter>
+      <Router>
         <Layout>
           <Routes>
             <Route path="/" element={<HomePage />} />
@@ -34,14 +37,24 @@ function App() {
             <Route
               path="/admin"
               element={
-                <ProtectedRoute adminOnly>
+                <ProtectedRoute>
                   <AdminPage />
                 </ProtectedRoute>
               }
             />
+            <Route path="/boards" element={<BoardListPage />} />
+            <Route
+              path="/boards/create"
+              element={
+                <ProtectedRoute>
+                  <BoardCreatePage />
+                </ProtectedRoute>
+              }
+            />
+            <Route path="/boards/:boardId" element={<BoardDetailPage />} />
           </Routes>
         </Layout>
-      </BrowserRouter>
+      </Router>
       <ToastContainer />
     </ThemeProvider>
   );
