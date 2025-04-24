@@ -15,8 +15,8 @@ export const boardApi = {
     api.get<BoardResponseDto>(`/boards/${boardId}`),
 
   // 게시글 목록 조회
-  getBoards: (sortType: string = 'latest', page: number = 0, size: number = 10) => 
-    api.get<BoardListResponse>(`/boards?sortType=${sortType}&page=${page}&size=${size}`),
+  getBoards: (sortType: string = 'latest', page: number = 0, size: number = 10, boardType?: string) => 
+    api.get<BoardListResponse>(`/boards?sortType=${sortType}&page=${page}&size=${size}${boardType ? `&boardType=${boardType}` : ''}`),
 
   // 게시글 수정
   updateBoard: (boardId: number, data: FormData) => 

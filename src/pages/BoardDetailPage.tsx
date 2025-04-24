@@ -75,7 +75,7 @@ const BoardDetailPage: React.FC = () => {
             작성자: {board.userName}
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            {format(new Date(board.createdAt), 'yyyy.MM.dd HH:mm')}
+            {board.createdAt ? format(new Date(board.createdAt), 'yyyy.MM.dd HH:mm') : '날짜 없음'}
           </Typography>
         </Box>
         <Divider sx={{ my: 2 }} />

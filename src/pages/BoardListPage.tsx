@@ -47,12 +47,7 @@ const BoardListPage: React.FC = () => {
 
   const fetchBoards = async () => {
     try {
-      let url = `/boards?sortType=${sortType}&page=${page}`;
-      if (boardType) {
-        url += `&boardType=${boardType}`;
-      }
-      
-      const response = await boardApi.getBoards(sortType, page);
+      const response = await boardApi.getBoards(sortType, page, 10, boardType);
       setBoards(response.data.content);
       setTotalPages(response.data.totalPages);
     } catch (error) {
@@ -157,7 +152,7 @@ const BoardListPage: React.FC = () => {
                     {getBoardTypeLabel(board.boardType)}
                   </Typography>
                   <Typography variant="subtitle2" color="text.secondary">
-                    {format(new Date(board.createdAt), 'yyyy.MM.dd')}
+                    {board.createdAt ? format(new Date(board.createdAt), 'yyyy.MM.dd') : '날짜 없음'}
                   </Typography>
                 </Box>
                 <Typography variant="h6" component="h2" gutterBottom>

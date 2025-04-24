@@ -13,8 +13,20 @@ import {
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { boardApi } from '../api/board';
-import { BoardResponseDto } from '../types/board';
+import { BoardResponseDto, BoardType } from '../types/board';
 import { format } from 'date-fns';
+
+const getBoardTypeLabel = (type: BoardType) => {
+  const labels: Record<BoardType, string> = {
+    [BoardType.BAND_PROMOTION]: '밴드 홍보',
+    [BoardType.PERFORMANCE_INFO]: '공연 정보',
+    [BoardType.MEMBER_RECRUITMENT]: '멤버 모집',
+    [BoardType.BAND_MATCHING]: '밴드 매칭',
+    [BoardType.SESSION_RECRUITMENT]: '세션 모집',
+    [BoardType.FREE]: '자유게시판',
+  };
+  return labels[type];
+};
 
 export const HomePage = () => {
   const navigate = useNavigate();
@@ -302,7 +314,7 @@ export const HomePage = () => {
                         gutterBottom
                         sx={{ fontWeight: 600 }}
                       >
-                        {post.boardType || '카테고리 없음'}
+                        {getBoardTypeLabel(post.boardType)}
                       </Typography>
                       <Typography 
                         variant="h6" 
@@ -313,19 +325,11 @@ export const HomePage = () => {
                           fontWeight: 600
                         }}
                       >
-                        {post.title || '제목 없음'}
+                        {post.title}
                       </Typography>
-                      <Typography 
-                        variant="body2" 
-                        color="text.secondary" 
-                        sx={{ mb: 2 }}
-                      >
-                        {post.text && post.text.length > 100 ? `${post.text.substring(0, 100)}...` : post.text || '내용 없음'}
-                      </Typography>
-                      <Divider sx={{ my: 1 }} />
                       <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 1 }}>
                         <Typography variant="body2" color="text.secondary">
-                          {post.userName || '작성자 없음'}
+                          {post.userName}
                         </Typography>
                         <Typography variant="body2" color="text.secondary">
                           {post.createdAt ? format(new Date(post.createdAt), 'yyyy.MM.dd') : '날짜 없음'}
