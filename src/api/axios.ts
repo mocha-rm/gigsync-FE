@@ -10,8 +10,8 @@ api.interceptors.request.use((config) => {
   const authStorage = localStorage.getItem('auth-storage');
   if (authStorage) {
     const { state } = JSON.parse(authStorage);
-    if (state.user?.accessToken) {
-      config.headers.Authorization = `Bearer ${state.user.accessToken}`;
+    if (state.token) {
+      config.headers.Authorization = `Bearer ${state.token}`;
     }
   }
   return config;
@@ -22,7 +22,7 @@ api.interceptors.response.use(
   (error) => {
     if (error.response?.status === 401) {
       // 보호된 경로에 대해서만 로그인 페이지로 리다이렉트
-      const protectedPaths = ['/profile', '/admin', '/boards/create'];
+      const protectedPaths = ['/profile', '/admin', '/boards/create', '/chat'];
       const currentPath = window.location.pathname;
       
       if (protectedPaths.some(path => currentPath.startsWith(path))) {

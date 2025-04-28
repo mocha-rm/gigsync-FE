@@ -15,6 +15,7 @@ import { AdminPage } from './pages/AdminPage';
 import BoardListPage from './pages/BoardListPage';
 import BoardCreatePage from './pages/BoardCreatePage';
 import BoardDetailPage from './pages/BoardDetailPage';
+import { ChatPage } from './pages/ChatPage';
 
 function App() {
   return (
@@ -27,7 +28,7 @@ function App() {
             <Route path="/login" element={<LoginPage />} />
             <Route path="/signup" element={<SignupPage />} />
             <Route
-              path="/profile"
+              path="/profile/:userId"
               element={
                 <ProtectedRoute>
                   <ProfilePage />
@@ -52,6 +53,14 @@ function App() {
               }
             />
             <Route path="/boards/:boardId" element={<BoardDetailPage />} />
+            <Route
+              path="/chat/:userId"
+              element={
+                <ProtectedRoute>
+                  <ChatPage />
+                </ProtectedRoute>
+              }
+            />
           </Routes>
         </Layout>
       </Router>

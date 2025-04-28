@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   AppBar,
   Toolbar,
@@ -10,18 +10,83 @@ import {
   MenuItem,
   IconButton,
   Tooltip,
+  Badge,
+  Drawer,
+  List,
+  ListItem,
+  ListItemText,
+  ListItemAvatar,
+  Avatar,
+  Divider,
 } from '@mui/material';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../../stores/authStore';
-import { Add as AddIcon } from '@mui/icons-material';
+import { Add as AddIcon, Chat as ChatIcon } from '@mui/icons-material';
 import { toast } from 'react-toastify';
 import { BoardType } from '../../types/board';
+import { chatApi } from '../../api/chat';
+import { ChatRoomResponseDto } from '../../types/chat';
 
 export const Header = () => {
   const { user, logout } = useAuthStore();
   const navigate = useNavigate();
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [boardMenuAnchorEl, setBoardMenuAnchorEl] = useState<null | HTMLElement>(null);
+  const [chatDrawerOpen, setChatDrawerOpen] = useState(false);
+  const [chatRooms, setChatRooms] = useState<ChatRoomResponseDto[]>([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  useEffect(() => {
+    if (user) {
+      fetchChatRooms();
+    }
+  }, [user]);
+
+  const fetchChatRooms = async () => {
+    try {
+      const response = await chatApi.getMyRooms();
+      const rooms = response.data.map(room => ({
+        ...room,
+        lastMessage: parseMessageContent(room.lastMessage)
+      }));
+      setChatRooms(rooms);
+      const totalUnread = rooms.reduce((sum, room) => sum + room.unreadCount, 0);
+      setUnreadCount(totalUnread);
+    } catch (error) {
+      console.error('채팅방 목록 조회 실패:', error);
+    }
+  };
+
+  const parseMessageContent = (content: string | undefined) => {
+    if (!content) return '';
+    try {
+      if (content.startsWith('{')) {
+        const parsed = JSON.parse(content);
+        return parsed.content || content;
+      }
+      return content;
+    } catch (e) {
+      return content;
+    }
+  };
+
+  const handleChatClick = () => {
+    if (!user) {
+      toast.info('로그인이 필요한 서비스입니다.');
+      navigate('/login');
+      return;
+    }
+    setChatDrawerOpen(true);
+  };
+
+  const handleChatRoomClick = (roomId: string, otherUserId: number) => {
+    navigate(`/chat/${otherUserId}`);
+    setChatDrawerOpen(false);
+    
+    setTimeout(() => {
+      fetchChatRooms();
+    }, 1000);
+  };
 
   const handleMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
@@ -53,6 +118,21 @@ export const Header = () => {
     handleBoardMenuClose();
   };
 
+  const handleProfileClick = () => {
+    if (user) {
+      navigate(`/profile/${user.id}`);
+    }
+    handleMenuClose();
+  };
+
+  const handleHomeClick = () => {
+    navigate('/');
+    
+    setTimeout(() => {
+      fetchChatRooms();
+    }, 1000);
+  };
+
   return (
     <AppBar 
       position="static" 
@@ -73,6 +153,7 @@ export const Header = () => {
             variant="h6"
             component={RouterLink}
             to="/"
+            onClick={handleHomeClick}
             sx={{ 
               flexGrow: 0, 
               textDecoration: 'none', 
@@ -153,6 +234,25 @@ export const Header = () => {
                 <AddIcon />
               </IconButton>
             </Tooltip>
+
+            <Tooltip title="채팅">
+              <IconButton
+                onClick={handleChatClick}
+                sx={{ 
+                  mr: 2,
+                  color: 'inherit',
+                  '&:hover': {
+                    transform: 'translateY(-2px)',
+                    backgroundColor: 'transparent',
+                    color: 'inherit'
+                  }
+                }}
+              >
+                <Badge badgeContent={unreadCount} color="error">
+                  <ChatIcon />
+                </Badge>
+              </IconButton>
+            </Tooltip>
             
             {user ? (
               <>
@@ -175,9 +275,7 @@ export const Header = () => {
                   onClose={handleMenuClose}
                 >
                   <MenuItem
-                    component={RouterLink}
-                    to="/profile"
-                    onClick={handleMenuClose}
+                    onClick={handleProfileClick}
                     sx={{ 
                       '&:hover': {
                         backgroundColor: 'rgba(0, 0, 0, 0.04)',
@@ -279,6 +377,64 @@ export const Header = () => {
           자유게시판
         </MenuItem>
       </Menu>
+
+      <Drawer
+        anchor="right"
+        open={chatDrawerOpen}
+        onClose={() => setChatDrawerOpen(false)}
+      >
+        <Box sx={{ width: 300, p: 2 }}>
+          <Typography variant="h6" gutterBottom>
+            채팅 목록
+          </Typography>
+          <List>
+            {chatRooms.map((room) => (
+              <React.Fragment key={room.roomId}>
+                <ListItem
+                  component="div"
+                  onClick={() => handleChatRoomClick(room.roomId, room.otherUserId)}
+                  sx={{
+                    cursor: 'pointer',
+                    '&:hover': {
+                      backgroundColor: 'rgba(0, 0, 0, 0.04)',
+                    },
+                  }}
+                >
+                  <ListItemAvatar>
+                    <Avatar>{room.otherUserNickName[0]}</Avatar>
+                  </ListItemAvatar>
+                  <ListItemText
+                    primary={room.otherUserNickName}
+                    secondary={
+                      <Typography
+                        component="span"
+                        variant="body2"
+                        color="text.primary"
+                        sx={{
+                          display: 'block',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap',
+                        }}
+                      >
+                        {room.lastMessage || '메시지가 없습니다'}
+                      </Typography>
+                    }
+                  />
+                  {room.unreadCount > 0 && (
+                    <Badge
+                      badgeContent={room.unreadCount}
+                      color="error"
+                      sx={{ ml: 1 }}
+                    />
+                  )}
+                </ListItem>
+                <Divider />
+              </React.Fragment>
+            ))}
+          </List>
+        </Box>
+      </Drawer>
     </AppBar>
   );
 }; 

@@ -8,6 +8,8 @@ import {
   IconButton,
   Link,
   Typography,
+  Menu,
+  MenuItem,
 } from '@mui/material';
 import {
   ArrowBack as ArrowBackIcon,
@@ -24,11 +26,13 @@ const BoardDetailPage: React.FC = () => {
   const navigate = useNavigate();
   const [board, setBoard] = useState<BoardResponseDto | null>(null);
   const user = useAuthStore((state) => state.user);
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
 
   useEffect(() => {
     const fetchBoard = async () => {
       try {
         const response = await boardApi.getBoard(Number(boardId));
+        console.log('게시글 데이터:', response.data);
         setBoard(response.data);
       } catch (error) {
         console.error('게시글 조회 실패:', error);
@@ -48,6 +52,37 @@ const BoardDetailPage: React.FC = () => {
       navigate('/boards');
     } catch (error) {
       console.error('게시글 삭제 실패:', error);
+    }
+  };
+
+  const handleAuthorMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleAuthorMenuClose = () => {
+    setAnchorEl(null);
+  };
+
+  const handleProfileClick = () => {
+    if (board) {
+      console.log('현재 board 객체:', board);
+      if (board.userId) {
+        navigate(`/profile/${board.userId}`);
+      } else {
+        console.error('작성자 ID가 없습니다. board:', board);
+      }
+      handleAuthorMenuClose();
+    }
+  };
+
+  const handleChatClick = () => {
+    if (board) {
+      if (board.userId) {
+        navigate(`/chat/${board.userId}`);
+      } else {
+        console.error('작성자 ID가 없습니다.');
+      }
+      handleAuthorMenuClose();
     }
   };
 
@@ -71,13 +106,32 @@ const BoardDetailPage: React.FC = () => {
           {board.title}
         </Typography>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
-          <Typography variant="body2" color="text.secondary">
+          <Typography 
+            variant="body2" 
+            color="text.secondary"
+            sx={{ 
+              cursor: 'pointer',
+              '&:hover': {
+                color: 'primary.main',
+                textDecoration: 'underline'
+              }
+            }}
+            onClick={handleAuthorMenuOpen}
+          >
             작성자: {board.userName}
           </Typography>
           <Typography variant="body2" color="text.secondary">
             {board.createdAt ? format(new Date(board.createdAt), 'yyyy.MM.dd HH:mm') : '날짜 없음'}
           </Typography>
         </Box>
+        <Menu
+          anchorEl={anchorEl}
+          open={Boolean(anchorEl)}
+          onClose={handleAuthorMenuClose}
+        >
+          <MenuItem onClick={handleProfileClick}>프로필 보기</MenuItem>
+          <MenuItem onClick={handleChatClick}>채팅 하기</MenuItem>
+        </Menu>
         <Divider sx={{ my: 2 }} />
         <Typography variant="body1" sx={{ whiteSpace: 'pre-wrap', mb: 3 }}>
           {board.text}
