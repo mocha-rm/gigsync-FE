@@ -16,15 +16,15 @@ export interface BoardRequestDto {
 
 export interface BoardResponseDto {
   id: number;
-  userId: number;
-  userName: string;
   title: string;
   text: string;
+  content: string;
   boardType: BoardType;
-  viewCount: number;
-  fileUrls: string[];
+  userId: number;
+  userName: string;
   createdAt: string;
-  modifiedAt: string;
+  updatedAt: string;
+  fileUrls: string[];
 }
 
 export interface BoardListResponse {

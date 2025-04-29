@@ -10,11 +10,14 @@ import {
   Typography,
   Menu,
   MenuItem,
+  ImageList,
+  ImageListItem,
 } from '@mui/material';
 import {
   ArrowBack as ArrowBackIcon,
   Edit as EditIcon,
   Delete as DeleteIcon,
+  AttachFile as AttachFileIcon,
 } from '@mui/icons-material';
 import { boardApi } from '../api/board';
 import { BoardResponseDto } from '../types/board';
@@ -86,6 +89,76 @@ const BoardDetailPage: React.FC = () => {
     }
   };
 
+  // 파일 URL이 이미지인지 확인
+  const isImageFile = (url: string) => {
+    return /\.(jpg|jpeg|png|gif|webp)$/i.test(url);
+  };
+
+  // 파일 URL이 비디오인지 확인
+  const isVideoFile = (url: string) => {
+    return /\.(mp4|webm|ogg)$/i.test(url);
+  };
+
+  // HTML 컨텐츠를 안전하게 렌더링
+  const renderContent = (content: string | null | undefined) => {
+    if (!content) return null;
+
+    // video 태그의 blob URL을 실제 URL로 교체
+    const processedContent = content.replace(
+      /<video[^>]*>.*?<\/video>/g,
+      (match) => {
+        const videoUrl = board?.fileUrls.find(url => isVideoFile(url));
+        if (videoUrl) {
+          return `<video controls style="width: 100%; max-height: 400px; margin: 1rem auto; display: block;" src="${videoUrl}"></video>`;
+        }
+        return match;
+      }
+    );
+
+    // 이미지 태그의 blob URL을 실제 URL로 교체
+    const finalContent = processedContent.replace(
+      /<img[^>]*src="blob:[^"]*"[^>]*>/g,
+      (match) => {
+        const imageUrl = board?.fileUrls.find(url => isImageFile(url));
+        if (imageUrl) {
+          return `<img src="${imageUrl}" style="max-width: 100%; height: auto; margin: 1rem auto; display: block;">`;
+        }
+        return match;
+      }
+    );
+
+    return (
+      <Box
+        dangerouslySetInnerHTML={{ __html: finalContent }}
+        sx={{
+          width: '100%',
+          whiteSpace: 'pre-wrap',
+          wordBreak: 'break-word',
+          '& > *': {
+            marginBottom: '1rem',
+          },
+          '& img': {
+            maxWidth: '100%',
+            height: 'auto',
+            display: 'block',
+            margin: '1rem auto',
+          },
+          '& video': {
+            maxWidth: '100%',
+            height: 'auto',
+            display: 'block',
+            margin: '1rem auto',
+          },
+          '& p': {
+            margin: '1rem 0',
+            lineHeight: 1.5,
+            fontSize: '1rem',
+          }
+        }}
+      />
+    );
+  };
+
   if (!board) return null;
 
   const isAuthor = user?.id === board.userId;
@@ -133,43 +206,26 @@ const BoardDetailPage: React.FC = () => {
           <MenuItem onClick={handleChatClick}>채팅 하기</MenuItem>
         </Menu>
         <Divider sx={{ my: 2 }} />
-        <Typography variant="body1" sx={{ whiteSpace: 'pre-wrap', mb: 3 }}>
-          {board.text}
-        </Typography>
-
-        {board.fileUrls.length > 0 && (
-          <Box sx={{ mb: 3 }}>
-            <Typography variant="subtitle1" gutterBottom>
-              첨부파일
-            </Typography>
-            {board.fileUrls.map((url, index) => (
-              <Link
-                key={index}
-                href={url}
-                target="_blank"
-                rel="noopener noreferrer"
-                sx={{ display: 'block', mb: 1 }}
-              >
-                파일 {index + 1}
-              </Link>
-            ))}
-          </Box>
-        )}
+        
+        <Box sx={{ mb: 3 }}>
+          {renderContent(board.text)}
+        </Box>
 
         {isAuthor && (
           <Box sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end' }}>
-            <IconButton
+            <Button
+              startIcon={<EditIcon />}
               onClick={() => navigate(`/boards/${boardId}/edit`)}
-              color="primary"
             >
-              <EditIcon />
-            </IconButton>
-            <IconButton
-              onClick={handleDelete}
+              수정
+            </Button>
+            <Button
+              startIcon={<DeleteIcon />}
               color="error"
+              onClick={handleDelete}
             >
-              <DeleteIcon />
-            </IconButton>
+              삭제
+            </Button>
           </Box>
         )}
       </Box>
