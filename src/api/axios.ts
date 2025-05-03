@@ -39,6 +39,7 @@ const refreshToken = async (): Promise<string | null> => {
 // 인증이 필요한 API 경로 목록
 const protectedPaths = [
   '/admin',
+  '/boards',
   '/boards/create',
   '/chat',
   '/chat/rooms',    // 채팅방 목록 조회

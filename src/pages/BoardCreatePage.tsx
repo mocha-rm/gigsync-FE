@@ -18,6 +18,7 @@ import Image from '@tiptap/extension-image';
 import { Node } from '@tiptap/core';
 import { boardApi } from '../api/board';
 import { BoardType } from '../types/board';
+import { useAuthStore } from '../stores/authStore';
 
 // 비디오 노드 생성
 const VideoNode = Node.create({
@@ -59,6 +60,7 @@ const BoardCreatePage: React.FC = () => {
   const [title, setTitle] = useState('');
   const [boardType, setBoardType] = useState<BoardType>(BoardType.FREE);
   const [files, setFiles] = useState<FileWithPreview[]>([]);
+  const user = useAuthStore((state) => state.user);
 
   const editor = useEditor({
     extensions: [
@@ -144,6 +146,9 @@ const BoardCreatePage: React.FC = () => {
               label="카테고리"
               onChange={(e) => setBoardType(e.target.value as BoardType)}
             >
+              {user?.role === 'ADMIN' && (
+                <MenuItem value={BoardType.NOTICE}>공지사항</MenuItem>
+              )}
               <MenuItem value={BoardType.BAND_PROMOTION}>밴드 홍보</MenuItem>
               <MenuItem value={BoardType.PERFORMANCE_INFO}>공연 정보</MenuItem>
               <MenuItem value={BoardType.MEMBER_RECRUITMENT}>멤버 모집</MenuItem>

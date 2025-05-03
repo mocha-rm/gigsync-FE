@@ -1,4 +1,5 @@
 export enum BoardType {
+  NOTICE = 'NOTICE',
   BAND_PROMOTION = 'BAND_PROMOTION',
   PERFORMANCE_INFO = 'PERFORMANCE_INFO',
   MEMBER_RECRUITMENT = 'MEMBER_RECRUITMENT',
@@ -25,6 +26,7 @@ export interface BoardResponseDto {
   createdAt: string;
   updatedAt: string;
   fileUrls: string[];
+  viewCount: number;
 }
 
 export interface BoardListResponse {

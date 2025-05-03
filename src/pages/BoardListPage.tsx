@@ -12,8 +12,9 @@ import {
   Pagination,
   Select,
   Typography,
+  Paper,
 } from '@mui/material';
-import { Add as AddIcon } from '@mui/icons-material';
+import { Add as AddIcon, Announcement as AnnouncementIcon } from '@mui/icons-material';
 import { boardApi } from '../api/board';
 import { BoardResponseDto, BoardType } from '../types/board';
 import { format } from 'date-fns';
@@ -25,6 +26,7 @@ const BoardListPage: React.FC = () => {
   const location = useLocation();
   const user = useAuthStore((state) => state.user);
   const [boards, setBoards] = useState<BoardResponseDto[]>([]);
+  const [notices, setNotices] = useState<BoardResponseDto[]>([]);
   const [page, setPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
   const [sortType, setSortType] = useState('latest');
@@ -55,8 +57,20 @@ const BoardListPage: React.FC = () => {
     }
   };
 
+  const fetchNotices = async () => {
+    try {
+      const response = await boardApi.getBoards('latest', 0, 5, BoardType.NOTICE);
+      setNotices(response.data.content);
+    } catch (error) {
+      console.error('공지사항 조회 실패:', error);
+    }
+  };
+
   useEffect(() => {
     fetchBoards();
+    if (boardType !== BoardType.NOTICE) {
+      fetchNotices();
+    }
   }, [page, sortType, boardType]);
 
   const handlePageChange = (event: React.ChangeEvent<unknown>, value: number) => {
@@ -84,6 +98,7 @@ const BoardListPage: React.FC = () => {
 
   const getBoardTypeLabel = (type: BoardType) => {
     const labels: Record<BoardType, string> = {
+      [BoardType.NOTICE]: '공지사항',
       [BoardType.BAND_PROMOTION]: '밴드 홍보',
       [BoardType.PERFORMANCE_INFO]: '공연 정보',
       [BoardType.MEMBER_RECRUITMENT]: '멤버 모집',
@@ -98,16 +113,62 @@ const BoardListPage: React.FC = () => {
     <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3 }}>
         <Typography variant="h4" component="h1">
-          커뮤니티
+          {boardType === BoardType.NOTICE ? '공지사항' : '커뮤니티'}
         </Typography>
-        <Button
-          variant="contained"
-          startIcon={<AddIcon />}
-          onClick={handleCreatePost}
-        >
-          글쓰기
-        </Button>
+        {boardType !== BoardType.NOTICE && (
+          <Button
+            variant="contained"
+            startIcon={<AddIcon />}
+            onClick={handleCreatePost}
+          >
+            글쓰기
+          </Button>
+        )}
       </Box>
+
+      {/* 공지사항 섹션 */}
+      {boardType !== BoardType.NOTICE && notices.length > 0 && (
+        <Paper 
+          sx={{ 
+            mb: 4, 
+            p: 2,
+            bgcolor: '#f8f9fa',
+            borderLeft: '4px solid #1976d2'
+          }}
+        >
+          <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+            <AnnouncementIcon color="primary" sx={{ mr: 1 }} />
+            <Typography variant="h6" component="h2">
+              공지사항
+            </Typography>
+          </Box>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+            {notices.map((notice) => (
+              <Box 
+                key={notice.id}
+                sx={{ 
+                  cursor: 'pointer',
+                  p: 1,
+                  '&:hover': {
+                    bgcolor: 'rgba(0, 0, 0, 0.04)',
+                    borderRadius: 1
+                  }
+                }}
+                onClick={() => navigate(`/boards/${notice.id}`)}
+              >
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <Typography variant="subtitle1">
+                    {notice.title}
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    {notice.createdAt ? format(new Date(notice.createdAt), 'yyyy.MM.dd') : '날짜 없음'}
+                  </Typography>
+                </Box>
+              </Box>
+            ))}
+          </Box>
+        </Paper>
+      )}
 
       <Box sx={{ display: 'flex', gap: 2, mb: 3 }}>
         <FormControl sx={{ minWidth: 120 }}>
@@ -140,36 +201,38 @@ const BoardListPage: React.FC = () => {
       </Box>
 
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-        {boards.map((board) => (
-          <Box key={board.id}>
-            <Card 
-              sx={{ cursor: 'pointer' }}
-              onClick={() => navigate(`/boards/${board.id}`)}
-            >
-              <CardContent>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                  <Typography variant="subtitle2" color="text.secondary">
-                    {getBoardTypeLabel(board.boardType)}
+        {boards
+          .filter(board => board.boardType !== BoardType.NOTICE)
+          .map((board) => (
+            <Box key={board.id}>
+              <Card 
+                sx={{ cursor: 'pointer' }}
+                onClick={() => navigate(`/boards/${board.id}`)}
+              >
+                <CardContent>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                    <Typography variant="subtitle2" color="text.secondary">
+                      {getBoardTypeLabel(board.boardType)}
+                    </Typography>
+                    <Typography variant="subtitle2" color="text.secondary">
+                      {board.createdAt ? format(new Date(board.createdAt), 'yyyy.MM.dd') : '날짜 없음'}
+                    </Typography>
+                  </Box>
+                  <Typography variant="h6" component="h2" gutterBottom>
+                    {board.title}
                   </Typography>
-                  <Typography variant="subtitle2" color="text.secondary">
-                    {board.createdAt ? format(new Date(board.createdAt), 'yyyy.MM.dd') : '날짜 없음'}
-                  </Typography>
-                </Box>
-                <Typography variant="h6" component="h2" gutterBottom>
-                  {board.title}
-                </Typography>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 2 }}>
-                  <Typography variant="body2" color="text.secondary">
-                    {board.userName}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    조회 {board.viewCount}
-                  </Typography>
-                </Box>
-              </CardContent>
-            </Card>
-          </Box>
-        ))}
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 2 }}>
+                    <Typography variant="body2" color="text.secondary">
+                      {board.userName}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      조회 {board.viewCount}
+                    </Typography>
+                  </Box>
+                </CardContent>
+              </Card>
+            </Box>
+          ))}
       </Box>
 
       <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>

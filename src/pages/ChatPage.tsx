@@ -91,23 +91,23 @@ export const ChatPage: React.FC = () => {
 
     socket.onmessage = (event) => {
       try {
-        const messageData = JSON.parse(event.data);
-        let content = messageData.content;
-        
-        // content가 JSON 문자열인 경우 파싱
-        try {
-          if (typeof content === 'string' && content.startsWith('{')) {
-            const parsedContent = JSON.parse(content);
-            content = parsedContent.content || content;
-          }
-        } catch (e) {
-          console.log('Content parsing failed:', e);
+      const messageData = JSON.parse(event.data);
+      let content = messageData.content;
+      
+      // content가 JSON 문자열인 경우 파싱
+      try {
+        if (typeof content === 'string' && content.startsWith('{')) {
+          const parsedContent = JSON.parse(content);
+          content = parsedContent.content || content;
         }
+      } catch (e) {
+        console.log('Content parsing failed:', e);
+      }
 
-        setMessages((prev) => [...prev, {
-          ...messageData,
-          content
-        }]);
+      setMessages((prev) => [...prev, {
+        ...messageData,
+        content
+      }]);
       } catch (error) {
         console.error('메시지 파싱 실패:', error);
       }
