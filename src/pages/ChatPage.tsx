@@ -61,9 +61,27 @@ export const ChatPage: React.FC = () => {
   useEffect(() => {
     if (!token || !userId || !currentUser) return;
 
+    // 토큰 만료 체크
+    const isExpired = (token: string): boolean => {
+      try {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        const exp = payload.exp * 1000;
+        return Date.now() >= exp;
+      } catch (error) {
+        return true;
+      }
+    };
+
+    if (isExpired(token)) {
+      console.error('토큰이 만료되었습니다.');
+      useAuthStore.getState().logout();
+      window.location.href = '/login';
+      return;
+    }
+
     // 웹소켓 연결
     const socket = new WebSocket(
-      `ws://localhost:8080/ws/chat?token=${token}&receiverId=${userId}`
+      `ws://localhost:8080/ws/chat?token=${encodeURIComponent(token)}&receiverId=${userId}`
     );
     ws.current = socket;
 
@@ -72,37 +90,58 @@ export const ChatPage: React.FC = () => {
     };
 
     socket.onmessage = (event) => {
-      const messageData = JSON.parse(event.data);
-      let content = messageData.content;
-      
-      // content가 JSON 문자열인 경우 파싱
       try {
-        if (typeof content === 'string' && content.startsWith('{')) {
-          const parsedContent = JSON.parse(content);
-          content = parsedContent.content || content;
+        const messageData = JSON.parse(event.data);
+        let content = messageData.content;
+        
+        // content가 JSON 문자열인 경우 파싱
+        try {
+          if (typeof content === 'string' && content.startsWith('{')) {
+            const parsedContent = JSON.parse(content);
+            content = parsedContent.content || content;
+          }
+        } catch (e) {
+          console.log('Content parsing failed:', e);
         }
-      } catch (e) {
-        // JSON 파싱 실패 시 원래 content 사용
-        console.log('Content parsing failed:', e);
-      }
 
-      setMessages((prev) => [...prev, {
-        ...messageData,
-        content
-      }]);
+        setMessages((prev) => [...prev, {
+          ...messageData,
+          content
+        }]);
+      } catch (error) {
+        console.error('메시지 파싱 실패:', error);
+      }
     };
 
     socket.onerror = (error) => {
       console.error('❌ WebSocket 오류:', error);
+      // WebSocket 오류 발생 시 재연결 시도
+      setTimeout(() => {
+        if (ws.current?.readyState === WebSocket.CLOSED) {
+          ws.current = new WebSocket(
+            `ws://localhost:8080/ws/chat?token=${encodeURIComponent(token)}&receiverId=${userId}`
+          );
+        }
+      }, 5000);
     };
 
-    socket.onclose = () => {
-      console.log('❎ WebSocket 연결 종료');
+    socket.onclose = (event) => {
+      console.log('❎ WebSocket 연결 종료:', event.code, event.reason);
+      // 정상적인 종료가 아닌 경우 재연결 시도
+      if (event.code !== 1000) {
+        setTimeout(() => {
+          if (ws.current?.readyState === WebSocket.CLOSED) {
+            ws.current = new WebSocket(
+              `ws://localhost:8080/ws/chat?token=${encodeURIComponent(token)}&receiverId=${userId}`
+            );
+          }
+        }, 5000);
+      }
     };
 
     return () => {
       if (ws.current) {
-        ws.current.close();
+        ws.current.close(1000, 'Component unmounting');
       }
     };
   }, [token, userId, currentUser]);

@@ -21,7 +21,7 @@ const isTokenExpired = (token: string): boolean => {
 // 토큰 갱신 함수
 const refreshToken = async (): Promise<string | null> => {
   try {
-    const response = await api.post('/api/auth/refresh');
+    const response = await api.post('/auth/refresh');
     return response.data.accessToken;
   } catch (error) {
     if (axios.isAxiosError(error) && error.response?.status === 401) {
@@ -36,22 +36,63 @@ const refreshToken = async (): Promise<string | null> => {
   }
 };
 
+// 인증이 필요한 API 경로 목록
+const protectedPaths = [
+  '/admin',
+  '/boards/create',
+  '/chat',
+  '/chat/rooms',    // 채팅방 목록 조회
+  '/chat/room',     // 채팅방 생성/조회
+  '/users/profile',  // 사용자 프로필 수정
+  '/users/admin',    // 관리자 관련 API
+  '/users/[0-9]' // 사용자 프로필 조회 (숫자 ID)
+];
+
+// 인증이 필요하지만 토큰 갱신이 실패해도 리다이렉트하지 않는 경로
+const softProtectedPaths = [
+  '/users'          // 사용자 목록 조회
+];
+
 api.interceptors.request.use(async (config) => {
-  const authStorage = localStorage.getItem('auth-storage');
-  if (authStorage) {
-    const { state } = JSON.parse(authStorage);
-    if (state.token) {
-      // 토큰 만료 체크
-      if (isTokenExpired(state.token)) {
-        const newToken = await refreshToken();
-        if (newToken) {
-          useAuthStore.getState().setToken(newToken);
-          config.headers.Authorization = `Bearer ${newToken}`;
+  // 인증이 필요한 API인지 확인
+  const isProtectedPath = protectedPaths.some(path => {
+    const regex = new RegExp('^' + path.replace('[0-9]+', '\\d+') + '$');
+    return config.url?.match(regex);
+  });
+  const isSoftProtectedPath = softProtectedPaths.some(path => config.url?.includes(path));
+  
+  if (isProtectedPath || isSoftProtectedPath) {
+    const authStorage = localStorage.getItem('auth-storage');
+    if (authStorage) {
+      const { state } = JSON.parse(authStorage);
+      if (state.token) {
+        // 토큰 만료 체크
+        if (isTokenExpired(state.token)) {
+          const newToken = await refreshToken();
+          if (newToken) {
+            useAuthStore.getState().setToken(newToken);
+            config.headers.Authorization = `Bearer ${newToken}`;
+          } else if (isProtectedPath) {
+            // 보호된 경로인 경우에만 리다이렉트
+            return Promise.reject('Token refresh failed');
+          }
         } else {
-          return Promise.reject('Token refresh failed');
+          config.headers.Authorization = `Bearer ${state.token}`;
         }
       } else {
-        config.headers.Authorization = `Bearer ${state.token}`;
+        // 토큰이 없는 경우
+        if (isProtectedPath) {
+          useAuthStore.getState().logout();
+          window.location.href = '/login';
+          return Promise.reject('No token available');
+        }
+      }
+    } else {
+      // auth-storage가 없는 경우
+      if (isProtectedPath) {
+        useAuthStore.getState().logout();
+        window.location.href = '/login';
+        return Promise.reject('No auth storage available');
       }
     }
   }
@@ -63,10 +104,12 @@ api.interceptors.response.use(
   async (error) => {
     if (error.response?.status === 401) {
       // 보호된 경로에 대해서만 로그인 페이지로 리다이렉트
-      const protectedPaths = ['/profile', '/admin', '/boards/create', '/chat'];
       const currentPath = window.location.pathname;
       
-      if (protectedPaths.some(path => currentPath.startsWith(path))) {
+      if (protectedPaths.some(path => {
+        const regex = new RegExp('^' + path.replace('[0-9]+', '\\d+') + '$');
+        return currentPath.match(regex);
+      })) {
         useAuthStore.getState().logout();
         window.location.href = '/login';
       }
