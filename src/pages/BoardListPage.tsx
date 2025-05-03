@@ -195,7 +195,7 @@ const BoardListPage: React.FC = () => {
             size="small"
           >
             <MenuItem value="latest">최신순</MenuItem>
-            <MenuItem value="popular">인기순</MenuItem>
+            <MenuItem value="view">인기순</MenuItem>
           </Select>
         </FormControl>
       </Box>
