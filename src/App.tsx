@@ -18,6 +18,7 @@ import BoardListPage from './pages/BoardListPage';
 import BoardCreatePage from './pages/BoardCreatePage';
 import BoardDetailPage from './pages/BoardDetailPage';
 import { ChatPage } from './pages/ChatPage';
+import BoardEditPage from './pages/BoardEditPage';
 
 function App() {
   return (
@@ -64,6 +65,7 @@ function App() {
                 </ProtectedRoute>
               }
             />
+            <Route path="/boards/:boardId/edit" element={<BoardEditPage />} />
           </Routes>
         </Layout>
       </Router>

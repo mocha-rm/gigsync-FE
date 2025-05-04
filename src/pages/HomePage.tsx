@@ -18,6 +18,7 @@ import { format } from 'date-fns';
 
 const getBoardTypeLabel = (type: BoardType) => {
   const labels: Record<BoardType, string> = {
+    [BoardType.NOTICE]: '공지사항',
     [BoardType.BAND_PROMOTION]: '밴드 홍보',
     [BoardType.PERFORMANCE_INFO]: '공연 정보',
     [BoardType.MEMBER_RECRUITMENT]: '멤버 모집',

@@ -15,18 +15,24 @@ export interface BoardRequestDto {
   deleteFileIds?: number[];
 }
 
+export interface BoardFile {
+  id: number;
+  fileName: string;
+  fileUrl: string;
+}
+
 export interface BoardResponseDto {
   id: number;
-  title: string;
-  text: string;
-  content: string;
-  boardType: BoardType;
   userId: number;
   userName: string;
-  createdAt: string;
-  updatedAt: string;
-  fileUrls: string[];
+  title: string;
+  text: string;
+  boardType: BoardType;
   viewCount: number;
+  fileUrls: string[];
+  files: BoardFile[];
+  createdAt: string;
+  modifiedAt: string;
 }
 
 export interface BoardListResponse {

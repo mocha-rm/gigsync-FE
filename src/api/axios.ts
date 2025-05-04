@@ -1,5 +1,5 @@
 // src/lib/axios.ts
-import axios from 'axios';
+import axios, { AxiosRequestConfig, InternalAxiosRequestConfig } from 'axios';
 import { toast } from 'react-toastify';
 import { useAuthStore } from '../stores/authStore';
 
@@ -22,7 +22,7 @@ const refreshToken = async (): Promise<string | null> => {
   try {
     const response = await api.post('/auth/refresh');
     return response.data.accessToken;
-  } catch (error: any) {
+  } catch (error) {
     if (axios.isAxiosError(error) && error.response?.status === 401) {
       toast.error('세션이 만료되었습니다. 다시 로그인해주세요.');
     } else {
@@ -34,7 +34,7 @@ const refreshToken = async (): Promise<string | null> => {
   }
 };
 
-api.interceptors.request.use(async (config) => {
+api.interceptors.request.use(async (config: InternalAxiosRequestConfig) => {
   const authStorage = localStorage.getItem('auth-storage');
   const { url } = config;
 
@@ -47,14 +47,33 @@ api.interceptors.request.use(async (config) => {
 
     if (token) {
       if (isTokenExpired(token)) {
-        const newToken = await refreshToken();
-        if (!newToken) return Promise.reject('Token refresh failed');
-        useAuthStore.getState().setToken(newToken);
-        config.headers.Authorization = `Bearer ${newToken}`;
+        try {
+          const newToken = await refreshToken();
+          if (!newToken) throw new Error('Token refresh failed');
+          useAuthStore.getState().setToken(newToken);
+          config.headers.Authorization = `Bearer ${newToken}`;
+        } catch (error) {
+          return Promise.reject(error);
+        }
       } else {
         config.headers.Authorization = `Bearer ${token}`;
       }
     }
+  }
+
+  // FormData 내용 중 board 데이터만 로깅
+  if (config.data instanceof FormData) {
+    for (let [key, value] of config.data.entries()) {
+      if (key === 'board') {
+        const boardData = await (value as Blob).text();
+        console.log('전송할 board 데이터:', JSON.parse(boardData));
+      }
+    }
+  }
+
+  // FormData 요청의 경우 Content-Type 헤더 처리
+  if (config.data instanceof FormData) {
+    delete config.headers['Content-Type'];
   }
 
   return config;
@@ -62,14 +81,30 @@ api.interceptors.request.use(async (config) => {
 
 api.interceptors.response.use(
   (response) => response,
-  (error) => {
+  async (error) => {
     if (axios.isAxiosError(error)) {
       if (error.response?.status === 401) {
-        useAuthStore.getState().logout();
-        window.location.href = '/login';
+        try {
+          const newToken = await refreshToken();
+          if (newToken && error.config) {
+            useAuthStore.getState().setToken(newToken);
+            const config = error.config as AxiosRequestConfig;
+            if (config.headers) {
+              config.headers.Authorization = `Bearer ${newToken}`;
+            }
+            return api(config);
+          }
+        } catch (refreshError) {
+          console.error('토큰 갱신 실패:', refreshError);
+          useAuthStore.getState().logout();
+          window.location.href = '/login';
+        }
       }
-      const message = error.response?.data?.message || '오류가 발생했습니다.';
-      toast.error(message);
+      // 에러 발생 시에만 로깅
+      console.error('API 에러:', {
+        status: error.response?.status,
+        data: error.response?.data
+      });
     }
     return Promise.reject(error);
   }

@@ -69,11 +69,10 @@ const BoardDetailPage: React.FC = () => {
 
   const handleProfileClick = () => {
     if (board) {
-      console.log('현재 board 객체:', board);
       if (board.userId) {
         navigate(`/profile/${board.userId}`);
       } else {
-        console.error('작성자 ID가 없습니다. board:', board);
+        console.error('작성자 ID가 없습니다.');
       }
       handleAuthorMenuClose();
     }
@@ -104,33 +103,9 @@ const BoardDetailPage: React.FC = () => {
   const renderContent = (content: string | null | undefined) => {
     if (!content) return null;
 
-    // video 태그의 blob URL을 실제 URL로 교체
-    const processedContent = content.replace(
-      /<video[^>]*>.*?<\/video>/g,
-      (match) => {
-        const videoUrl = board?.fileUrls.find(url => isVideoFile(url));
-        if (videoUrl) {
-          return `<video controls style="width: 100%; max-height: 400px; margin: 1rem auto; display: block;" src="${videoUrl}"></video>`;
-        }
-        return match;
-      }
-    );
-
-    // 이미지 태그의 blob URL을 실제 URL로 교체
-    const finalContent = processedContent.replace(
-      /<img[^>]*src="blob:[^"]*"[^>]*>/g,
-      (match) => {
-        const imageUrl = board?.fileUrls.find(url => isImageFile(url));
-        if (imageUrl) {
-          return `<img src="${imageUrl}" style="max-width: 100%; height: auto; margin: 1rem auto; display: block;">`;
-        }
-        return match;
-      }
-    );
-
     return (
       <Box
-        dangerouslySetInnerHTML={{ __html: finalContent }}
+        dangerouslySetInnerHTML={{ __html: content }}
         sx={{
           width: '100%',
           whiteSpace: 'pre-wrap',
@@ -157,6 +132,40 @@ const BoardDetailPage: React.FC = () => {
           }
         }}
       />
+    );
+  };
+
+  // 파일 렌더링을 위한 새로운 컴포넌트
+  const renderFiles = () => {
+    if (!board.files || board.files.length === 0) return null;
+
+    return (
+      <Box sx={{ mt: 3 }}>
+        <Typography variant="h6" gutterBottom>
+          첨부 파일
+        </Typography>
+        {board.files.map((file) => (
+          <Box
+            key={file.id}
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1,
+              mb: 1,
+            }}
+          >
+            <AttachFileIcon />
+            <Link
+              href={file.fileUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              sx={{ textDecoration: 'none' }}
+            >
+              {file.fileName}
+            </Link>
+          </Box>
+        ))}
+      </Box>
     );
   };
 
@@ -210,6 +219,7 @@ const BoardDetailPage: React.FC = () => {
         
         <Box sx={{ mb: 3 }}>
           {renderContent(board.text)}
+          {renderFiles()}
         </Box>
 
         {isAuthor && (
