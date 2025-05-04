@@ -23,6 +23,7 @@ import { boardApi } from '../api/board';
 import { BoardResponseDto } from '../types/board';
 import { format } from 'date-fns';
 import { useAuthStore } from '../stores/authStore';
+import CommentSystem from '../components/comment/CommentSystem';
 
 const BoardDetailPage: React.FC = () => {
   const { boardId } = useParams<{ boardId: string }>();
@@ -229,6 +230,8 @@ const BoardDetailPage: React.FC = () => {
           </Box>
         )}
       </Box>
+
+      <CommentSystem boardId={Number(boardId)} />
     </Container>
   );
 };
