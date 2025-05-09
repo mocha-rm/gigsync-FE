@@ -1,4 +1,3 @@
-// src/lib/axios.ts
 import axios, { AxiosRequestConfig, InternalAxiosRequestConfig } from 'axios';
 import { toast } from 'react-toastify';
 import { useAuthStore } from '../stores/authStore';
@@ -35,30 +34,30 @@ const refreshToken = async (): Promise<string | null> => {
 };
 
 api.interceptors.request.use(async (config: InternalAxiosRequestConfig) => {
-  const authStorage = localStorage.getItem('auth-storage');
   const { url } = config;
 
   // refresh 요청 자체는 제외
   if (url?.includes('/auth/refresh')) return config;
 
-  if (authStorage) {
-    const { state } = JSON.parse(authStorage);
-    const token = state.token;
+  try {
+    const authStorage = localStorage.getItem('auth-storage');
+    if (authStorage) {
+      const parsed = JSON.parse(authStorage);
+      const token = parsed?.state?.token;
 
-    if (token) {
-      if (isTokenExpired(token)) {
-        try {
+      if (token) {
+        if (isTokenExpired(token)) {
           const newToken = await refreshToken();
           if (!newToken) throw new Error('Token refresh failed');
           useAuthStore.getState().setToken(newToken);
           config.headers.Authorization = `Bearer ${newToken}`;
-        } catch (error) {
-          return Promise.reject(error);
+        } else {
+          config.headers.Authorization = `Bearer ${token}`;
         }
-      } else {
-        config.headers.Authorization = `Bearer ${token}`;
       }
     }
+  } catch (e) {
+    console.warn('auth-storage 파싱 실패 또는 토큰 없음:', e);
   }
 
   // FormData 내용 중 board 데이터만 로깅
