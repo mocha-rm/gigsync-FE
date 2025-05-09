@@ -82,16 +82,22 @@ api.interceptors.response.use(
   (response) => response,
   async (error) => {
     if (axios.isAxiosError(error)) {
-      if (error.response?.status === 401) {
+      const originalRequest = error.config as AxiosRequestConfig;
+
+      // 현재 accessToken이 없으면 refresh 시도도 하지 않음
+      const authStorage = localStorage.getItem('auth-storage');
+      const token = authStorage ? JSON.parse(authStorage)?.state?.token : null;
+
+      if (error.response?.status === 401 && token) {
         try {
           const newToken = await refreshToken();
-          if (newToken && error.config) {
+          if (newToken && originalRequest) {
             useAuthStore.getState().setToken(newToken);
-            const config = error.config as AxiosRequestConfig;
-            if (config.headers) {
-              config.headers.Authorization = `Bearer ${newToken}`;
-            }
-            return api(config);
+            originalRequest.headers = {
+              ...originalRequest.headers,
+              Authorization: `Bearer ${newToken}`,
+            };
+            return api(originalRequest);
           }
         } catch (refreshError) {
           console.error('토큰 갱신 실패:', refreshError);
@@ -99,12 +105,13 @@ api.interceptors.response.use(
           window.location.href = '/login';
         }
       }
-      // 에러 발생 시에만 로깅
+
       console.error('API 에러:', {
         status: error.response?.status,
         data: error.response?.data,
       });
     }
+
     return Promise.reject(error);
   }
 );
