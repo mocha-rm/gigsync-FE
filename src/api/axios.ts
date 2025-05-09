@@ -4,7 +4,8 @@ import { toast } from 'react-toastify';
 import { useAuthStore } from '../stores/authStore';
 
 const api = axios.create({
-  baseURL: 'http://localhost:8080/api',
+  baseURL:
+    'http://ec2-15-164-224-95.ap-northeast-2.compute.amazonaws.com:8080/api',
   withCredentials: true,
 });
 
@@ -103,7 +104,7 @@ api.interceptors.response.use(
       // 에러 발생 시에만 로깅
       console.error('API 에러:', {
         status: error.response?.status,
-        data: error.response?.data
+        data: error.response?.data,
       });
     }
     return Promise.reject(error);
