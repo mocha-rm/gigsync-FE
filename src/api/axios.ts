@@ -4,8 +4,7 @@ import { toast } from 'react-toastify';
 import { useAuthStore } from '../stores/authStore';
 
 const api = axios.create({
-  baseURL:
-    'http://ec2-15-164-224-95.ap-northeast-2.compute.amazonaws.com:8080/api',
+  baseURL: '/api',
   withCredentials: true,
 });
 
