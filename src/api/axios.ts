@@ -66,6 +66,7 @@ const addRefreshSubscriber = (callback: (token: string) => void) => {
 const api = axios.create({
   baseURL:
     'http://ec2-15-164-163-181.ap-northeast-2.compute.amazonaws.com:8080/api',
+  //'http://localhost:8080/api',
   withCredentials: true,
 });
 
@@ -94,6 +95,7 @@ const isTokenExpired = (token: string): boolean => {
 const refreshApi = axios.create({
   baseURL:
     'http://ec2-15-164-163-181.ap-northeast-2.compute.amazonaws.com:8080/api',
+  //'http://localhost:8080/api',
   withCredentials: true,
 });
 

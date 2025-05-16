@@ -81,7 +81,9 @@ export const ChatPage: React.FC = () => {
 
     // 웹소켓 연결
     const socket = new WebSocket(
-      `ws://localhost:8080/ws/chat?token=${encodeURIComponent(token)}&receiverId=${userId}`
+      `ws://ec2-15-164-163-181.ap-northeast-2.compute.amazonaws.com:8080/ws/chat?token=${encodeURIComponent(
+        token
+      )}&receiverId=${userId}`
     );
     ws.current = socket;
 
@@ -91,23 +93,26 @@ export const ChatPage: React.FC = () => {
 
     socket.onmessage = (event) => {
       try {
-      const messageData = JSON.parse(event.data);
-      let content = messageData.content;
-      
-      // content가 JSON 문자열인 경우 파싱
-      try {
-        if (typeof content === 'string' && content.startsWith('{')) {
-          const parsedContent = JSON.parse(content);
-          content = parsedContent.content || content;
-        }
-      } catch (e) {
-        console.log('Content parsing failed:', e);
-      }
+        const messageData = JSON.parse(event.data);
+        let content = messageData.content;
 
-      setMessages((prev) => [...prev, {
-        ...messageData,
-        content
-      }]);
+        // content가 JSON 문자열인 경우 파싱
+        try {
+          if (typeof content === 'string' && content.startsWith('{')) {
+            const parsedContent = JSON.parse(content);
+            content = parsedContent.content || content;
+          }
+        } catch (e) {
+          console.log('Content parsing failed:', e);
+        }
+
+        setMessages((prev) => [
+          ...prev,
+          {
+            ...messageData,
+            content,
+          },
+        ]);
       } catch (error) {
         console.error('메시지 파싱 실패:', error);
       }
@@ -119,7 +124,9 @@ export const ChatPage: React.FC = () => {
       setTimeout(() => {
         if (ws.current?.readyState === WebSocket.CLOSED) {
           ws.current = new WebSocket(
-            `ws://localhost:8080/ws/chat?token=${encodeURIComponent(token)}&receiverId=${userId}`
+            `ws://ec2-15-164-163-181.ap-northeast-2.compute.amazonaws.com:8080/ws/chat?token=${encodeURIComponent(
+              token
+            )}&receiverId=${userId}`
           );
         }
       }, 5000);
@@ -132,7 +139,9 @@ export const ChatPage: React.FC = () => {
         setTimeout(() => {
           if (ws.current?.readyState === WebSocket.CLOSED) {
             ws.current = new WebSocket(
-              `ws://localhost:8080/ws/chat?token=${encodeURIComponent(token)}&receiverId=${userId}`
+              `ws://ec2-15-164-163-181.ap-northeast-2.compute.amazonaws.com:8080/ws/chat?token=${encodeURIComponent(
+                token
+              )}&receiverId=${userId}`
             );
           }
         }, 5000);
@@ -168,10 +177,10 @@ export const ChatPage: React.FC = () => {
       content: newMessage,
       type: 'TEXT',
       timestamp: new Date().toISOString(),
-      isRead: false
+      isRead: false,
     };
 
-    setMessages(prev => [...prev, tempMessage]);
+    setMessages((prev) => [...prev, tempMessage]);
     ws.current.send(JSON.stringify(message));
     setNewMessage('');
   };
@@ -194,7 +203,16 @@ export const ChatPage: React.FC = () => {
         </Box>
 
         {/* 메시지 목록 */}
-        <Box sx={{ flexGrow: 1, overflow: 'auto', p: 2, display: 'flex', flexDirection: 'column-reverse', bgcolor: '#f7f8fa' }}>
+        <Box
+          sx={{
+            flexGrow: 1,
+            overflow: 'auto',
+            p: 2,
+            display: 'flex',
+            flexDirection: 'column-reverse',
+            bgcolor: '#f7f8fa',
+          }}
+        >
           <List sx={{ p: 0 }}>
             {messages.map((message, index) => {
               const isMine = message.senderId === currentUser.id.toString();
@@ -209,18 +227,23 @@ export const ChatPage: React.FC = () => {
                 <React.Fragment key={message.id || index}>
                   {showDate && (
                     <ListItem sx={{ justifyContent: 'center', py: 1 }}>
-                      <Box sx={{
-                        bgcolor: '#e0e3e8',
-                        color: '#888',
-                        borderRadius: 8,
-                        px: 2.5,
-                        py: 0.5,
-                        fontSize: 13,
-                        fontWeight: 500,
-                        mx: 'auto',
-                        boxShadow: '0 1px 4px rgba(0,0,0,0.04)'
-                      }}>
-                        {format(parseISO(message.timestamp), 'yyyy년 M월 d일 EEEE')}
+                      <Box
+                        sx={{
+                          bgcolor: '#e0e3e8',
+                          color: '#888',
+                          borderRadius: 8,
+                          px: 2.5,
+                          py: 0.5,
+                          fontSize: 13,
+                          fontWeight: 500,
+                          mx: 'auto',
+                          boxShadow: '0 1px 4px rgba(0,0,0,0.04)',
+                        }}
+                      >
+                        {format(
+                          parseISO(message.timestamp),
+                          'yyyy년 M월 d일 EEEE'
+                        )}
                       </Box>
                     </ListItem>
                   )}
@@ -237,12 +260,34 @@ export const ChatPage: React.FC = () => {
                   >
                     {!isMine && (
                       <ListItemAvatar sx={{ minWidth: 44, mr: 1 }}>
-                        <Avatar src={otherUser.profileImageUrl} sx={{ width: 36, height: 36, boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }} />
+                        <Avatar
+                          src={otherUser.profileImageUrl}
+                          sx={{
+                            width: 36,
+                            height: 36,
+                            boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+                          }}
+                        />
                       </ListItemAvatar>
                     )}
-                    <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: isMine ? 'flex-end' : 'flex-start', maxWidth: '70%' }}>
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: isMine ? 'flex-end' : 'flex-start',
+                        maxWidth: '70%',
+                      }}
+                    >
                       {!isMine && (
-                        <Typography variant="subtitle2" sx={{ color: '#222', fontWeight: 700, mb: 0.5, ml: 0.5 }}>
+                        <Typography
+                          variant="subtitle2"
+                          sx={{
+                            color: '#222',
+                            fontWeight: 700,
+                            mb: 0.5,
+                            ml: 0.5,
+                          }}
+                        >
                           {message.senderNickName}
                         </Typography>
                       )}
