@@ -65,8 +65,8 @@ const addRefreshSubscriber = (callback: (token: string) => void) => {
 
 const api = axios.create({
   baseURL:
-    'http://ec2-15-164-163-181.ap-northeast-2.compute.amazonaws.com:8080/api',
-  //'http://localhost:8080/api',
+    //'http://ec2-15-164-163-181.ap-northeast-2.compute.amazonaws.com:8080/api',
+  'http://localhost:8080/api',
   withCredentials: true,
 });
 
@@ -94,8 +94,8 @@ const isTokenExpired = (token: string): boolean => {
 // 토큰 갱신을 위한 별도의 axios 인스턴스
 const refreshApi = axios.create({
   baseURL:
-    'http://ec2-15-164-163-181.ap-northeast-2.compute.amazonaws.com:8080/api',
-  //'http://localhost:8080/api',
+    //'http://ec2-15-164-163-181.ap-northeast-2.compute.amazonaws.com:8080/api',
+  'http://localhost:8080/api',
   withCredentials: true,
 });
 
