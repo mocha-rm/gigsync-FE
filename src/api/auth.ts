@@ -9,6 +9,22 @@ export interface SignupRequest {
   email: string;
   password: string;
   nickName: string;
+  phoneNumber: string;
+  verificationCode: string;
+}
+
+export interface EmailVerificationRequest {
+  email: string;
+}
+
+export interface FindEmailRequest {
+  phoneNumber: string;
+}
+
+export interface ResetPasswordRequest {
+  email: string;
+  verificationCode: string;
+  password: string;
 }
 
 export const authApi = {
@@ -23,4 +39,13 @@ export const authApi = {
     
   logout: () => 
     api.post('/logout'),
+
+  sendVerificationCode: (data: EmailVerificationRequest) =>
+    api.post('/verifyEmail', data),
+
+  findEmail: (data: FindEmailRequest) =>
+    api.post('/auth/findEmail', data),
+
+  resetPassword: (data: ResetPasswordRequest) =>
+    api.post('/auth/resetPassword', data),
 }; 
