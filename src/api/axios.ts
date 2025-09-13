@@ -63,10 +63,11 @@ const addRefreshSubscriber = (callback: (token: string) => void) => {
   });
 };
 
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
+
 const api = axios.create({
   baseURL:
-    //'http://ec2-15-164-163-181.ap-northeast-2.compute.amazonaws.com:8080/api',
-  'http://localhost:8080/api',
+    API_BASE_URL,
   withCredentials: true,
 });
 
@@ -94,8 +95,7 @@ const isTokenExpired = (token: string): boolean => {
 // 토큰 갱신을 위한 별도의 axios 인스턴스
 const refreshApi = axios.create({
   baseURL:
-    //'http://ec2-15-164-163-181.ap-northeast-2.compute.amazonaws.com:8080/api',
-  'http://localhost:8080/api',
+    API_BASE_URL,
   withCredentials: true,
 });
 
@@ -133,8 +133,7 @@ const refreshToken = async (): Promise<string | null> => {
         }, 500);
       } else {
         toast.error(
-          `토큰 갱신 중 오류가 발생했습니다: ${
-            error.response?.status || '네트워크 오류'
+          `토큰 갱신 중 오류가 발생했습니다: ${error.response?.status || '네트워크 오류'
           }`
         );
       }
