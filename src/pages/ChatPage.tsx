@@ -81,7 +81,7 @@ export const ChatPage: React.FC = () => {
 
     // 웹소켓 연결
     const socket = new WebSocket(
-      `ws://ec2-15-164-163-181.ap-northeast-2.compute.amazonaws.com:8080/ws/chat?token=${encodeURIComponent(
+      `wss://gigsync-be-production.up.railway.app/ws/chat?token=${encodeURIComponent(
         token
       )}&receiverId=${userId}`
     );
@@ -124,7 +124,7 @@ export const ChatPage: React.FC = () => {
       setTimeout(() => {
         if (ws.current?.readyState === WebSocket.CLOSED) {
           ws.current = new WebSocket(
-            `ws://ec2-15-164-163-181.ap-northeast-2.compute.amazonaws.com:8080/ws/chat?token=${encodeURIComponent(
+            `wss://gigsync-be-production.up.railway.app/ws/chat?token=${encodeURIComponent(
               token
             )}&receiverId=${userId}`
           );
@@ -139,7 +139,7 @@ export const ChatPage: React.FC = () => {
         setTimeout(() => {
           if (ws.current?.readyState === WebSocket.CLOSED) {
             ws.current = new WebSocket(
-              `ws://ec2-15-164-163-181.ap-northeast-2.compute.amazonaws.com:8080/ws/chat?token=${encodeURIComponent(
+              `wss://gigsync-be-production.up.railway.app/ws/chat?token=${encodeURIComponent(
                 token
               )}&receiverId=${userId}`
             );
