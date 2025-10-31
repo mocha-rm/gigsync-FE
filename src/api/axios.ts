@@ -63,7 +63,7 @@ const addRefreshSubscriber = (callback: (token: string) => void) => {
   });
 };
 
-const API_BASE_URL = (import.meta as any).env?.VITE_API_URL || 'https://gigsync-be-production.up.railway.app/api';
+const API_BASE_URL = (import.meta as any).env?.VITE_API_URL || 'https://api.gigsync.kr/api';
 
 const api = axios.create({
   baseURL:
